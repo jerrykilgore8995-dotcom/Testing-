@@ -31,8 +31,8 @@ R14 ptrim2 pb 4.7k
 L2p pa pb {T2L}
 L2s g2a g2b {T2L/(T2N*T2N)}
 K2 L2p L2s 0.999
-R15 g2a bias3 20k
-R17 bias3 g2b 20k
+R15 g2a 0 20k
+R17 0 g2b 20k
 X3 p2a g2a k2a AX7
 X4 p2b g2b k2b AX7
 R19 k2a k2mid 2.2k
@@ -50,21 +50,27 @@ R26 bpre bplus 47k
 C9 bpre 0 16u
 C3 p2a g3a 47n
 C4 p2b g3b 47n
-R27 g3a bias3 120k
-R29 bias3 g3b 120k
-R28 bias3 k3 330
+R27 g3a 0 120k
+R29 0 g3b 120k
+R28 0 k3 330
 X5 p3a g3a k3 BH7
 X6 p3b g3b k3 BH7
-* JBB shows cathodes tied to ground? shared cathode node at 11V;
-* bias return via R15/R17, R28; explicit provisional cathode return.
-Rk3 k3 0 330
 * Coupled series winding segments: physical shared flux, not buffered taps.
 L3a p3a ta {T3L*(1-TAP+0.0001)^2/4}
 L3b ta bplus {T3L*TAP^2/4}
 L3c bplus tb {T3L*TAP^2/4}
 L3d tb p3b {T3L*(1-TAP+0.0001)^2/4}
 L3s out 0 {T3L/T3N^2}
-K3 L3a L3b L3c L3d L3s 0.999
+K3_0_0 L3a L3b 0.999
+K3_0_1 L3a L3c 0.999
+K3_0_2 L3a L3d 0.999
+K3_0_3 L3a L3s 0.999
+K3_1_0 L3b L3c 0.999
+K3_1_1 L3b L3d 0.999
+K3_1_2 L3b L3s 0.999
+K3_2_0 L3c L3d 0.999
+K3_2_1 L3c L3s 0.999
+K3_3_0 L3d L3s 0.999
 R30 out outload 0.01
 Rload outload 0 600
 C6 ta da 500n
@@ -108,7 +114,7 @@ Cpg g p {CGP}
 Cpk p k {CPK}
 .ends
 .subckt BC8 p g k
-X p g k tri MU=84.20 EX=1.696 KG=378.9 KP=75.61 KVB=2026.2 VCT=0.5 CGK=2.5p CGP=1.4p CPK=1.3p
+Xtri p g k tri MU=84.20 EX=1.696 KG=378.9 KP=75.61 KVB=2026.2 VCT=0.5 CGK=2.5p CGP=1.4p CPK=1.3p
 .ends
 .subckt AX7 p g k
 X p g k tri
@@ -116,13 +122,13 @@ X p g k tri
 .subckt BH7 p g k
 X p g k tri MU=24.59 EX=1.343 KG=594.4 KP=73.01 KVB=300 CGK=3.9p CGP=3.2p CPK=1.1p
 .ends
-* Diode Child-Langmuir provisional fits, NOT verified against curves.
+* Perugini second-improvement diode fits from GE and Perugini data.
 .subckt D6AL5 a k
-B a k I={0.00025*pow(max(v(a,k),0),1.5)}
-C a k 2.5p
+Bvac a k I={max(0,0.004147079+0.000702*v(a,k))*pow(max(v(a,k)-0.648792,0),0.757482)}
+Cvac a k 2.5p
 .ends
 .subckt GZ a k
-B a k I={0.001*pow(max(v(a,k),0),1.5)}
+B a k I={max(0,0.0065731838+0.0003454340*v(a,k))*pow(max(v(a,k)+0.1,0),1.0847522)}
 .ends
 .options method=trap reltol=1e-5
 .control
