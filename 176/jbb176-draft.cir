@@ -1,0 +1,135 @@
+* JBB 176 preliminary full audio circuit, NOT calibrated.
+* Sources: supplied JBB drawing; UA winding drawing 10477; Koren tube parameters.
+* Transformer DCR, coupling, T1/T2 ratios and inductances provisional.
+.param F=20 AMP=1.737 RA=1k REL=2.5Meg RATIO=4 LIMIT=1
+.param T1N=9.13 T1L=6.7 T2N=2.3 T2L=100 T3N=7.071 T3L=55
+.param RT={ternary_fcn(RATIO==2,47k,ternary_fcn(RATIO==4,20k,ternary_fcn(RATIO==8,6.8k,1k)))}
+.param TAP={ternary_fcn(RATIO==2,0.13,ternary_fcn(RATIO==4,0.32,ternary_fcn(RATIO==8,0.68,1)))}
+Vsig src 0 SIN(0 {AMP} {F})
+Rsource src in 600
+* R1/R30 approximated full-up, source/load termination explicit
+R1 in ip 0.01
+L1p ip 0 {T1L}
+L1s ga gb {T1L*T1N*T1N}
+K1 L1p L1s 0.999
+R2 ga cv 27k
+R5 gb cv 27k
+X1 pa ga ka BC8
+X2 pb gb kb BC8
+R7 ka kbal 47
+R8 kb kbal 47
+R6a ka kbal 50
+R6b kb kbal 50
+R9 kbal 0 330
+R10a kbal meter 500
+R10b meter kz 500
+R11 kz 0 330
+R12 pa ptrim1 4.7k
+R13a ptrim1 reg 500
+R13b reg ptrim2 500
+R14 ptrim2 pb 4.7k
+L2p pa pb {T2L}
+L2s g2a g2b {T2L/(T2N*T2N)}
+K2 L2p L2s 0.999
+R15 g2a bias3 20k
+R17 bias3 g2b 20k
+X3 p2a g2a k2a AX7
+X4 p2b g2b k2b AX7
+R19 k2a k2mid 2.2k
+R20 k2b k2mid 2.2k
+R16 k2mid 0 2.2k
+C1 k2a fb1 470n
+R18 fb1 0 180k
+R22 fb1 p3a 180k
+C2 k2b fb2 470n
+R21 fb2 0 180k
+R25 fb2 p3b 180k
+R23 p2a bpre 220k
+R24 p2b bpre 220k
+R26 bpre bplus 47k
+C9 bpre 0 16u
+C3 p2a g3a 47n
+C4 p2b g3b 47n
+R27 g3a bias3 120k
+R29 bias3 g3b 120k
+R28 bias3 k3 330
+X5 p3a g3a k3 BH7
+X6 p3b g3b k3 BH7
+* JBB shows cathodes tied to ground? shared cathode node at 11V;
+* bias return via R15/R17, R28; explicit provisional cathode return.
+Rk3 k3 0 330
+* Coupled series winding segments: physical shared flux, not buffered taps.
+L3a p3a ta {T3L*(1-TAP+0.0001)^2/4}
+L3b ta bplus {T3L*TAP^2/4}
+L3c bplus tb {T3L*TAP^2/4}
+L3d tb p3b {T3L*(1-TAP+0.0001)^2/4}
+L3s out 0 {T3L/T3N^2}
+K3 L3a L3b L3c L3d L3s 0.999
+R30 out outload 0.01
+Rload outload 0 600
+C6 ta da 500n
+C7 tb db 500n
+R36 da detbias 220k
+R37 db detbias 220k
+R38 reg detbias 82k
+Rratio detbias 0 {RT}
+C8 detbias 0 20u
+X7 rect da D6AL5
+X8 rect db D6AL5
+R34a rect rw {REL}
+R34b rw 0 {5Meg-REL}
+R35 rw 0 270k
+R33 rect sw {RA}
+Rswitch sw cv {ternary_fcn(LIMIT,0.01,1e12)}
+Roff cv 0 {ternary_fcn(LIMIT,1e12,0.01)}
+C5 cv 0 100n
+* Test switch open; meter disconnected in GR position for audio test.
+* PSU: provisional ideal 325Vrms half-windings, not characterized T4.
+Vma ma 0 SIN(0 459.619 60)
+Vmb mb 0 SIN(0 459.619 60 0 0 180)
+Rma ma m1 100
+Rmb mb m2 100
+X9 m1 raw GZ
+X10 m2 raw GZ
+C13 raw 0 50u
+Lch raw ch 10
+C12 ch 0 50u
+R44 ch bplus 1.5k
+C11 bplus 0 32u
+R43 bplus reg 10k
+C10 reg 0 100n
+* OB2 warm operating-region approximation (no ignition model)
+Breg reg 0 I={max((v(reg)-108)/100,0)}
+.subckt tri p g k params: MU=100 EX=1.4 KG=1060 KP=600 KVB=300 VCT=0 CGK=2.3p CGP=2.4p CPK=0.9p
+Bplate p k I={2*pow(max(v(p,k),0)/KP*ln(1+exp(min(60,KP*(1/MU+(v(g,k)+VCT)/sqrt(KVB+v(p,k)^2))))),EX)/KG}
+Bgrid g k I={max(v(g,k),0)/2000}
+Ckg g k {CGK}
+Cpg g p {CGP}
+Cpk p k {CPK}
+.ends
+.subckt BC8 p g k
+X p g k tri MU=84.20 EX=1.696 KG=378.9 KP=75.61 KVB=2026.2 VCT=0.5 CGK=2.5p CGP=1.4p CPK=1.3p
+.ends
+.subckt AX7 p g k
+X p g k tri
+.ends
+.subckt BH7 p g k
+X p g k tri MU=24.59 EX=1.343 KG=594.4 KP=73.01 KVB=300 CGK=3.9p CGP=3.2p CPK=1.1p
+.ends
+* Diode Child-Langmuir provisional fits, NOT verified against curves.
+.subckt D6AL5 a k
+B a k I={0.00025*pow(max(v(a,k),0),1.5)}
+C a k 2.5p
+.ends
+.subckt GZ a k
+B a k I={0.001*pow(max(v(a,k),0),1.5)}
+.ends
+.options method=trap reltol=1e-5
+.control
+set wr_singlescale
+set wr_vecnames
+tran 20u 8 6 20u
+wrdata trace.dat v(outload) v(cv) v(rect) v(detbias) v(pa) v(pb) v(p3a) v(p3b) v(bplus) v(reg) v(k3)
+quit
+.endc
+.end
