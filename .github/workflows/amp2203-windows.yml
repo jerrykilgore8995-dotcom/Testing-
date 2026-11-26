@@ -1,0 +1,29 @@
+name: Amp2203 Windows VST3
+on:
+  push:
+    branches: [amp2203-stock-mod]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve upstream
+        run: git clone https://github.com/CatastrophicCoder/ampsim2.git upstream
+      - name: Apply circuit changes
+        working-directory: upstream
+        run: python ../amp2203/apply_mod.py
+      - name: Configure
+        run: cmake -S upstream -B build -A x64 -DAMP2203_BUILD_PLUGIN=ON -DAMP2203_BUILD_TESTS=ON -DAMP2203_BUILD_TOOLS=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel 4
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amp2203-Windows-x64
+          path: build/plugin/amp2203_plugin_artefacts/Release/VST3/
+          if-no-files-found: error
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
