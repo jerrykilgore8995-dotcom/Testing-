@@ -1,4 +1,4 @@
-UA 176 complete audio circuit with rectified supply bench
+JBB UA 176 with Sowter 1285, nominal components
 .include input.lib
 .include amplifier.lib
 .include detector.lib
@@ -24,7 +24,7 @@ R36 DET_K1 DET_BIAS 220k
 R37 DET_BIAS DET_K2 220k
 R38 REG DET_BIAS 82k
 R_S5 DET_BIAS 0 {RATIO_R}
-C8A DET_BIAS 0 20u
+C8 DET_BIAS 0 20u
 * Pins 7 and 2 are the tied anodes that pull C5 negative via the attack path.
 XV4A DET_A DET_K1 UA176_6AL5
 XV4B DET_A DET_K2 UA176_6AL5
@@ -32,8 +32,7 @@ XV4B DET_A DET_K2 UA176_6AL5
 * S4 connects the timing path in ON and grounds the control node in OFF.
 R_S4_ON CV ATK_IN {ternary_fcn(LIMITING,1m,1T)}
 R_S4_OFF CV 0 {ternary_fcn(LIMITING,1T,1m)}
-R32 ATK_IN DET_A 10k
-R33 ATK_IN DET_A {max(1m,25k*(1-ATTACK))}
+R33 ATK_IN DET_A {max(1m,1meg*(1-ATTACK))}
 R34A DET_A REL_WIPER {max(1m,5meg*(1-RELEASE))}
 R34B REL_WIPER 0 {max(1m,5meg*RELEASE)}
 R35 REL_WIPER 0 270k
@@ -43,9 +42,9 @@ R35 REL_WIPER 0 270k
 set wr_singlescale
 set wr_vecnames
 set numdgt=15
-tran 10u 1.2 1.1 10u
+tran 20u 5 4 20u
 let audio = v(out_p,t3_n)
-wrdata powered.txt v(rect) v(filter) v(t3_ct) v(reg) v(cv) audio
+wrdata powered.txt v(rect) v(filter) v(t3_ct) v(reg) v(cv) audio v(det_a) v(det_bias) v(det_k1) v(det_k2) v(tap_a,t3_ct) v(tap_b,t3_ct)
 quit
 .endc
 .end
