@@ -1,0 +1,24 @@
+* JBB UA176 detector passive network, NOT complete amplifier.
+* External ports are physical transformer taps, regulated 108V, and T1 grid midpoint.
+* R33 and R34 are rheostats at specified settings; ratio tap pairs must be selected externally.
+.subckt DET176 tapA tapB bias108 gridmid 0 params: RA=1Meg RR=5Meg RT=20k
+C6 tapA plateA 500n
+C7 tapB plateB 500n
+R36 plateA biasdet 220k
+R37 plateB biasdet 220k
+R38 bias108 biasdet 82k
+C8 biasdet 0 20u
+Rratio biasdet 0 {RT}
+* 6AL5 anodes at common rect node; cathodes at plateA/B (verify pin mapping against tube sheet).
+XDA rect plateA VAC6AL5
+XDB rect plateB VAC6AL5
+R33 rect gridmid {RA}
+C5 gridmid 0 100n
+* R34 wiper shunted to ground through R35; split pot rather than rheostat.
+* RR is upper segment, total 5Meg.
+R34a rect relw {max(RR,1)}
+R34b relw 0 {max(5Meg-RR,1)}
+R35 relw 0 270k
+.ends DET176
+* VAC6AL5 intentionally undefined until measured tube model verified.
+* Not runnable standalone. No fabricated measurement data.
