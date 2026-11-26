@@ -7,17 +7,11 @@ XPAD INP INN PAD_P TN UA176T_PAD LOSSDB={LOSSDB}
 R1 PAD_P TP {max(1u,300*VERNIER)}
 XT1 TP TN SEC_P SEC_N UA176_TRANSFORMER LL={LL} CS={CS}
 
-* R2-R5 differential gain ladder. HI takes the winding ends; LO takes the taps.
-R2 SEC_P TAP_P 10k
-R3 TAP_P CV 6.8k
-R4 CV TAP_N 6.8k
-R5 TAP_N SEC_N 10k
-RG_HI_P SEC_P GP {ternary_fcn(HIGH,1m,1T)}
-RG_LO_P TAP_P GP {ternary_fcn(HIGH,1T,1m)}
-RG_HI_N SEC_N GN {ternary_fcn(HIGH,1m,1T)}
-RG_LO_N TAP_N GN {ternary_fcn(HIGH,1T,1m)}
-
-* Control node at the R3/R4 junction in the normal test-switch position.
+* JBB: direct winding ends to grids, 27k each to midpoint.
+R2 SEC_P CV 27k
+R5 SEC_N CV 27k
+RG_P SEC_P GP 1m
+RG_N SEC_N GN 1m
 C5 CV 0 .1u
 
 * Push-pull 6BC8 with the Sylvania law and supplied grid-current branch.
