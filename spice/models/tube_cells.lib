@@ -1,0 +1,88 @@
+* TUBE COMP - DATASHEET-ANCHORED VALVE CELLS (rev B / 2026-11-12)
+* These models correct the original hard 6BC8 cutoff and 6CG7 gain error.
+* A per-device parametric fit is NOT proof of a factory-original Altec unit.
+* 6BC8 model from published Sylvania plate-curve Koren parameter candidate,
+* also stored in models/6bc8_sylvania_curve_candidate.lib (source there).
+* See RCA 6BC8 datasheet: https://frank.pocnet.net/sheets/049/6/6BC8.pdf
+* The model at Va=150V has nonzero conduction at Vg=-10V; this is essential
+* for remote-cutoff gain reduction across many tens of dB.
+.subckt V6BC8 P G K
+BPL P K I={20.19891536u*pow(uramp(V(P,K)*ln(1+exp(1.794225622*(1+54.16463004*V(G,K)/sqrt(922.2704089+V(P,K)*V(P,K)))))/1.794225622),1.439822572)}
+Rleak P K 1000Meg
+CGK G K 3.9p
+CGA G P 3.7p
+CPK P K 1.8p
+.ends V6BC8
+
+* 6BC8 semiremote-cutoff candidate, fitted at TWO operating conditions.
+* This optional variant adds a very weak low-gm plate-current branch,
+* representing the low-mu sections of the semiremote-cutoff grid.
+* Numerical fit anchors:
+*  - RCA sheet at Va=150V and Rk=220R: Ip approx 10mA and gm=6200umho,
+*    grid grounded -> Vgk approx -2.2V; rp approx 5.3k.
+*  - factory 436C drawing at idle: 65V plates, (210-65)/47k=3.085mA,
+*    grid-cathode about -1V with 34R shared cathode.
+*  - RCA -13V sensitivity: gm about 50umho.
+*  - factory 20dB compressed: 285V plates, 290V plate-feed, 47k loads
+*    => (290-285)/47k = 0.1064mA PER HALF at about -30V bias.
+* Single-Koren V6BC8 yields only 0.000172mA at this last anchor (x618 low).
+* Fitted monotonic remote tail is NOT a manufacturer's plate curve;
+* independently verify against a real 6BC8 at the deep-negative bias.
+* DC positive grid current, heaters, and alternate supply sag are unmodeled.
+.subckt V6BC8_REMOTE P G K
+BPL P K I={20.2365654u*pow(uramp(V(P,K)*ln(1+exp(1.794225622*(1+59.22382604*V(G,K)/sqrt(922.2704089+V(P,K)*V(P,K)))))/1.794225622),1.439822572)+0.96348024m*pow(uramp(V(P,K)/150),1.69329672)/(1+exp(-(V(G,K)+14.76054299)/4.6849283))}
+Rleak P K 1000Meg
+CGK G K 3.9p
+CGA G P 3.7p
+CPK P K 1.8p
+.ends V6BC8_REMOTE
+
+* Improved semiremote 6BC8 tail, EXPONENTIAL over negative-grid range.
+* Current V6BC8_REMOTE candidate (sigmoid tail) has an unacceptable
+* nonmonotonic gain-vs-CV interval near -12..-18V despite lower THD.
+* An exponential tail has strictly positive gm that decreases monotonically
+* as Vg becomes more negative; the normal Koren cell behaves the same.
+* Fitted anchors as V6BC8_REMOTE (see above), but do NOT use as hardware
+* certification without measured published plate curves beyond -13V.
+* At Va=150/Vgk=-2.2: 10.06mA, gm=6214uS; at Va=65/Vgk=-1:
+* 3.09mA; at Va=150/Vgk=-13: gm=50uS; at Va=285/Vgk=-30:
+* 0.10638mA. Positive grid current and core magnetics remain unmodeled.
+.subckt V6BC8_REMOTE_EXP P G K
+BPL P K I={19.65702722u*pow(uramp(V(P,K)*ln(1+exp(1.794225622*(1+61.17656889*V(G,K)/sqrt(922.2704089+V(P,K)*V(P,K)))))/1.794225622),1.439822572)+0.35980862m*pow(uramp(V(P,K)/150),1.76348216)*exp((V(G,K)+13)/7.23198212)}
+Rleak P K 1000Meg
+CGK G K 3.9p
+CGA G P 3.7p
+CPK P K 1.8p
+.ends V6BC8_REMOTE_EXP
+
+* 6CG7: CC0 model fitted by Circuit Codex to published RCA anchor:
+* Va=250V / Vg=-8V -> 9mA, 2600umho, mu=20.
+* Further checkpoints at 90V/0V and 250V/-12.5V are approximate.
+* Upstream model: https://github.com/TheAnalogMaker/circuit-codex/blob/main/models/6cg7.inc
+* License: CC0 1.0 Universal. Heater and positive grid current not modeled.
+.subckt V6CG7 P G K
+BPL P K I={pow(uramp((V(P,K)/127.155)*ln(1+exp(127.155*(1/20+V(G,K)/sqrt(300+V(P,K)*V(P,K)))))),1.5)/1134.77}
+Rleak P K 1000Meg
+CGK G K 2.3p
+CGA G P 4p
+CPK P K 2.2p
+.ends V6CG7
+
+* Alternative independently published 6CG7 plate-curve candidate: GE 1963.
+* The GE Koren parameters (MU=21.86 EX=1.319 KG1=1248.5 KP=140.12
+* KVB=300) originate in GE-derived triode libraries. They are a
+* cross-check candidate, NOT a proof of the particular Altec factory tube.
+* Do not silently replace the RCA candidate until multiple anchor points
+* and the circuit operating-point measurements have been compared.
+.subckt V6CG7_GE P G K
+BPL P K I={pow(uramp((V(P,K)/140.12)*ln(1+exp(140.12*(1/21.86+V(G,K)/sqrt(300+V(P,K)*V(P,K)))))),1.319)/1248.5}
+Rleak P K 1000Meg
+CGK G K 2.9p
+CGA G P 4.7p
+CPK P K 2.7p
+.ends V6CG7_GE
+
+* 6AL5 diode remains a provisional forward characteristic.
+* Diode's 3.2-3.6pF element capacitance comes from Sylvania 6AL5 sheet.
+* Equivalent Is/N/Rs NOT a calibrated plate-current curve.
+.model D6AL5 D(Is=3n N=1.55 Rs=600 Cjo=3.4p M=0.40 Tt=65n)
