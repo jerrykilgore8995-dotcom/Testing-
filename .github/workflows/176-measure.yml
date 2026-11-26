@@ -1,21 +1,22 @@
-name: 176 preliminary SPICE measurement
+name: JBB 176 Sowter measurements
 on:
   push:
     paths:
-      - '176/**'
+      - 'spice/176/**'
       - '.github/workflows/176-measure.yml'
   workflow_dispatch:
 jobs:
   measure:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y ngspice python3-numpy
-      - run: /usr/bin/python3 176/measure.py
+      - run: /usr/bin/python3 spice/176/jbb_measure.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: 176-preliminary-measurements
+          name: jbb-sowter-measurements
           path: |
-            176/*.csv
-            176/*.log
+            spice/176/jbb-results.jsonl
+            spice/176/jbb-*.log
